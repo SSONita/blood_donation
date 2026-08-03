@@ -45,93 +45,118 @@ A **Full-Stack Web Application** for managing blood donations, requests, invento
 | GitHub       | Version control            |
 | Postman      | API testing                |
 
-
 # 🩸 Blood Donation System – Project Structure
 
+This project uses a **feature-based architecture**: instead of grouping files by
+type (`controllers/`, `pages/`, `services/`...), each business capability
+(auth, donation, blood requests, inventory, history, education) owns its own
+folder containing everything it needs — pages/controllers, models, routes,
+and API services. Truly cross-cutting code (layouts, the navbar, the axios
+client, auth-token helpers) lives in a `shared/` or `lib/` folder instead.
 
 ## 🖥️ Frontend (React + Vite)
 
-- **public/**
-  - images/                 → Static assets
-- **src/**
-  - **components/**         → Shared UI components
-    - Footer.jsx
-    - Logo.jsx
-    - Navbar.jsx
-  - **context/**            → React Contexts (e.g. Auth)
-    - AuthContext.jsx
-  - **layouts/**            → Page-level layouts
-    - AuthLayout.jsx
-    - MainLayout.jsx
-  - **pages/**              → Main route views
-    - Donation.jsx
-    - Education.jsx
-    - History.jsx
-    - Home.jsx
-    - Inventory.jsx
-    - Login.jsx
-    - NotFound.jsx
-    - Request.jsx
-    - SignUp.jsx
-  - **services/**           → API wrappers and auth
-    - api.js
-    - auth.js
-  - App.jsx
-  - main.jsx
-  - index.css
-  - vite-env.d.ts
-- .gitignore
-- index.html
-- postcss.config.js
-- tailwind.config.js
-- README.md
-- package.json
-- package-lock.json
+```
+frontend/src/
+├── features/
+│   ├── auth/
+│   │   ├── pages/          Login.jsx, SignUp.jsx
+│   │   ├── context/        AuthContext.jsx (session state, login/logout)
+│   │   └── services/       authService.js (register/login API calls)
+│   ├── donation/
+│   │   ├── pages/          Donation.jsx (book an appointment)
+│   │   └── services/       donationService.js
+│   ├── request/
+│   │   ├── pages/          Request.jsx (request blood)
+│   │   └── services/       requestService.js
+│   ├── inventory/
+│   │   ├── pages/          Inventory.jsx
+│   │   └── services/       inventoryService.js
+│   ├── history/
+│   │   ├── pages/          History.jsx
+│   │   └── services/       historyService.js
+│   ├── education/
+│   │   ├── pages/          Education.jsx
+│   │   └── services/       educationService.js
+│   └── home/
+│       └── pages/          Home.jsx
+├── shared/                 Code used by more than one feature
+│   ├── components/         Navbar.jsx, Footer.jsx, Logo.jsx
+│   ├── layouts/             MainLayout.jsx, AuthLayout.jsx
+│   └── pages/               NotFound.jsx
+├── lib/                     Framework-level infrastructure
+│   ├── apiClient.js         Shared axios instance + auth interceptor
+│   └── auth.js               Token/session helpers (getToken, isAuthenticated...)
+├── App.jsx                  Route definitions, wires features together
+├── main.jsx
+└── index.css
+```
 
-
+Each feature's `services/*.js` file imports the shared `lib/apiClient.js`
+instance (which already attaches the JWT to every request), so feature code
+never has to think about auth headers directly.
 
 ## 🛠️ Backend (Express + Node.js)
 
-- **config/**               → Application configuration files
-  - db.config.js
-  - jwt.config.js
-- **controllers/**          → Request logic and handlers
-  - appointment.controller.js
-  - auth.controller.js
-  - bloodInventory.controller.js
-  - bloodRequest.controller.js
-  - donor.controller.js
-  - hospital.controller.js
-  - user.controller.js
-- **middleware/**           → Reusable middleware functions
-  - auth.middleware.js
-  - errorHandler.js
-- **models/**               → Sequelize/Mongoose data schemas
-  - appointment.model.js
-  - bloodInventory.model.js
-  - bloodRequest.model.js
-  - donor.model.js
-  - hospital.model.js
-  - user.model.js
-- **routes/**               → API endpoint definitions
-  - appointment.routes.js
-  - auth.routes.js
-  - bloodInventory.routes.js
-  - bloodRequest.routes.js
-  - donor.routes.js
-  - hospital.routes.js
-  - user.routes.js
-- **node_modules/**         → Installed dependencies
-- app.js                    → Main application entry point
-- .env                      → Environment variables
-- .gitignore
-- README.md
-- package-lock.json
-- package.json
+```
+backend/
+├── app.js                   Express app: CORS, routes, DB bootstrap
+├── config/
+│   └── db.config.js
+├── db/
+│   └── index.js              Sequelize instance, model registration, associations
+├── shared/                   Code used by more than one feature
+│   ├── middleware/           auth.middleware.js, validation.middleware.js
+│   └── models/               User, BloodType, DonationCenter (reference data
+│                              used across multiple features)
+└── features/
+    ├── auth/
+    │   ├── auth.controller.js
+    │   └── auth.routes.js
+    ├── appointment/            (blood donation appointments)
+    │   ├── appointment.controller.js
+    │   ├── appointment.model.js
+    │   └── appointment.routes.js
+    ├── bloodRequest/
+    │   ├── bloodRequest.controller.js
+    │   ├── bloodRequest.model.js
+    │   └── bloodRequest.routes.js
+    ├── bloodInventory/
+    │   ├── bloodInventory.controller.js
+    │   ├── bloodInventory.model.js
+    │   └── bloodInventory.routes.js
+    ├── donationHistory/
+    │   ├── donationHistory.controller.js
+    │   ├── donationHistory.model.js
+    │   └── donationHistory.routes.js
+    └── education/
+        ├── educationResource.controller.js
+        └── educationResource.routes.js
+```
 
----
+`db/index.js` is the one place that knows about every model — it pulls in
+each feature's model plus the shared reference models and wires up the
+Sequelize associations between them.
 
-
+### Fixes made while refactoring
+- `Login.jsx` previously called `fetch('http://localhost:3000/...')` directly
+  instead of going through `AuthContext`/the shared API client — it now uses
+  `useAuth().login(...)`, so the session is stored consistently and the app
+  no longer breaks if the API URL changes.
+- The login response mislabeled `last_name` as `first_name`, and the navbar
+  read a `currentUser.name` field that the API never returned — the backend
+  now returns both names, and the navbar builds the display name from them.
+- `isAuthenticated()` only decoded the JWT (which just has `user_id`/`email`),
+  so a logged-in user's name/blood type were unavailable app-wide — it now
+  returns the full profile that's saved to `localStorage` at login.
+- Backend `package.json` had a bogus `"cros"` dependency (typo for `cors`,
+  which was already listed correctly) — removed.
+- An unreachable `console.error` after a `return` in the register handler was
+  cleaned up, and registration now validates `first_name`/`last_name` too.
+- Added `backend/.env.example` documenting the required environment
+  variables (none existed before, only referenced in this README).
+- Added a `GET /api/health` endpoint and a catch-all JSON error handler on
+  the backend.
 ## 🗃 Database Configuration
 
 ### Railway PostgreSQL Setup
@@ -165,7 +190,7 @@ NODE_ENV=development
 ```bash
 cd backend
 npm install
-cp .env # Configure your Railway DB URL
+cp .env.example .env   # then fill in your DB credentials
 npm run dev
 ```
 

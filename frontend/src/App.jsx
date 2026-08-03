@@ -1,23 +1,25 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import React from 'react';
 
-// Auth context
-import { AuthProvider } from './context/AuthContext';
+// Auth context (auth feature)
+import { AuthProvider } from './features/auth/context/AuthContext';
 
-// Layouts
-import MainLayout from './layouts/MainLayout';
-import AuthLayout from './layouts/AuthLayout';
+// Shared layouts
+import MainLayout from './shared/layouts/MainLayout';
+import AuthLayout from './shared/layouts/AuthLayout';
 
-// Pages
-import Home from './pages/Home';
-import Inventory from './pages/Inventory';
-import Request from './pages/Request';
-import History from './pages/History';
-import Education from './pages/Education';
-import Donation from './pages/Donation';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import NotFound from './pages/NotFound';
+// Feature pages
+import Home from './features/home/pages/Home';
+import Inventory from './features/inventory/pages/Inventory';
+import Request from './features/request/pages/Request';
+import History from './features/history/pages/History';
+import Education from './features/education/pages/Education';
+import Donation from './features/donation/pages/Donation';
+import Login from './features/auth/pages/Login';
+import SignUp from './features/auth/pages/SignUp';
+
+// Shared pages
+import NotFound from './shared/pages/NotFound';
 
 function App() {
   return (

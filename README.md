@@ -194,6 +194,33 @@ cp .env.example .env   # then fill in your DB credentials
 npm run dev
 ```
 
+### Seed Data (Cambodia sample data)
+Once the server has started at least once (so Sequelize has created the
+tables), you can populate the database with sample data — Cambodian blood
+donation centers, users, appointments, requests, inventory, and history:
+
+```bash
+npm run seed
+```
+
+This **truncates and resets** `history`, `donation`, `request`, `inventory`,
+`user`, `donation_center`, and `blood_type`, then inserts:
+- 8 blood types
+- 10 real Cambodian hospitals/blood banks (National Blood Transfusion
+  Centre, Calmette Hospital, Siem Reap/Battambang/Kampong Cham provincial
+  hospitals, etc.)
+- 15 users with Cambodian names, `+855` phone numbers, and a spread of
+  blood types
+- ~60 inventory records across the centers
+- 7 donation appointments, 5 blood requests, and 6 history entries
+
+Every seeded user shares the password **`Password123!`** — log in with any
+of the emails in `backend/seed/seed.js` (e.g. `sokha.chan@example.com`) to
+try the app with data already in it.
+
+⚠️ Only run this against a database you don't mind wiping — it truncates
+the tables first.
+
 ### Backend Dependencies (Node.js/Express)
 Core Dependencies (install with `npm install <package>`):
 ```bash

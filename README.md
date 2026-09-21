@@ -1,4 +1,4 @@
-# 🩸 Blood Donation Management System
+# 🩸 Blood Donation Management System (optimized version)
 
 A **Full-Stack Web Application** for managing blood donations, requests, inventory, and donor engagement. Built with modern web technologies to streamline blood bank operations and enhance donor accessibility.
 
